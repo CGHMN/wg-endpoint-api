@@ -1,0 +1,26 @@
+{
+	"name": "cghmn/wg-endpoint-api",
+	"description": "API to allow HTTP to configure a Wireguard interface on the local machine",
+	"autoload": {
+		"psr-4": {
+			"WgEndpointApi\\": "src/"
+		},
+		"files": [
+			"src/autoload.php"
+		]
+	},
+	"authors": [
+		{
+			"name": "jonasluehrig",
+			"email": "github@diskcat.com"
+		}
+	],
+	"require": {
+		"miladrahimi/phprouter": "^5.1",
+		"deemru/curve25519": "^1.0",
+		"luzrain/ipcalc": "^2.0",
+		"vlucas/phpdotenv": "^5.7"
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true
+}

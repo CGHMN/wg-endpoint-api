@@ -1,0 +1,54 @@
+title: Wireguard Peer
+description: Represents a Wireguard Peer connecting to a Wireguard Interface
+type: object
+required:
+  - public_key
+properties:
+  public_key:
+    title: Public Key
+    description: Public key of the peer
+    type: string
+    example: 0FV+EXUgDu3s4vktF08WOJk0Qp3IxIKp5BM4/zTkUSM=
+  preshared_key:
+    title: Preshared Key
+    description: Preshared key between the peer and local tunnel interface
+    type: string
+    example: oMbWTsgHbSYP3DktWoQxNapfpek49DgEEQnZBjZskp0=
+    nullable: true
+  endpoint_address:
+    title: Endpoint Address
+    description: IP address or hostname of the peer endpoint to connect to
+    type: string
+    example: peer1.example.org
+    nullable: true
+  endpoint_port:
+    title: Endpoint Port
+    description: Port of the peer endpoint to connect to
+    type: integer
+    example: 51820
+    minimum: 1
+    maximum: 65535
+    nullable: true
+  persistent_keepalive:
+    title: Persistent Keepalive Interval
+    description: Interval after which to send empty packets towards the peer to keep NAT connections open
+    type: integer
+    example: 15
+    minimum: 1
+    nullable: true
+  name:
+    title: Optional peer name
+    description: Optional property to assign a peer a name
+    type: string
+    example: First Peer
+    nullable: true
+  allowed_ips:
+    title: Allowed IPs
+    description: IP addresses routed towards the peer
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+    example:
+      - 172.16.0.2/32
+      - 10.0.2.0/24

@@ -1,0 +1,48 @@
+title: Wireguard Interface
+description: Represents a Wireguard tunnel interface
+type: object
+required:
+  - private_key
+  - address
+properties:
+  private_key:
+    title: Private Key
+    description: Private key of the tunnel interface itself
+    type: string
+    example: ON926JlcsOj4LZ7leO0oDtbLzy+gQYdpk6aN+WLHO3U=
+  address:
+    title: Interface IPv4 address in CIDR notation
+    description: Local IPv4 address of the tunnel interface in CIDR notation
+    type: string
+    example: 172.16.0.1/24
+  listen_port:
+    title: Listen Port
+    description: UDP port on which the tunnel interfaces listens for incoming packets on. Set to null to autoselect a random port
+    type: integer
+    example: 51820
+    minimum: 1
+    maximum: 65535
+    nullable: true
+  mtu:
+    title: Interface MTU
+    description: Maximum transmission unit size of the tunnel interface
+    type: integer
+    example: 1300
+    minimum: 68
+    maximum: 65535
+    nullable: true
+  fwmark:
+    title: Packet Firewall Mark
+    description: Firewall mark applied to packets flowing out of the tunnel interface
+    type: integer
+    example: 10000
+    minimum: 1
+    maximum: 4294967295
+    nullable: true
+  peers:
+    title: Wireguard Peers
+    description: Configuration entries for Wireguard peers connecting to this interface
+    type: array
+    uniqueItems: true
+    items:
+      $ref: WireguardPeer.yaml

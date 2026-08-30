@@ -1,0 +1,42 @@
+post:
+  summary: Synchronize Wireguard configuration with local Wireguard interface
+  description: Takes a WireguardInterface JSON object and syncs it against the given local Wireguard interface or creates it if it doesn't already exist
+  parameters:
+    - name: interface
+      in: path
+      description: Linux interface name of the tunnel interface, starting with wg-*
+      required: true
+      schema:
+        type: string
+        example: wg-server
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: boolean
+            enum:
+              - true
+            example: true
+    400:
+      description: Invalid data given
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                title: Error Message
+                type: string
+    401:
+      description: Missing or invalid authorization (X-API-Key header)
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                title: Error Message
+                type: string
+                example: "Unauthorized"

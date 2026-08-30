@@ -1,0 +1,26 @@
+openapi: 3.0.0
+info:
+  title: CGHMN Wireguard API for remote nodes
+  description: |
+    This API allows Wireguard tunnels to be configured on remote nodes through a simple HTTP call.
+    It is stateless and syncs existing tunnels with the given configuration without interrupting existing connections.
+  version: 1.0.0
+
+paths:
+  /api/v1/interfaces/{interface}/sync:
+    $ref: routes/api/v1/interfaces/sync.yaml
+
+components:
+  schemas:
+    WireguardInterface:
+      $ref: components/WireguardInterface.yaml
+    WireguardPeer:
+      $ref: components/WireguardPeer.yaml
+  securitySchemes:
+    apiAuthKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - apiKeyAuth: [] # use the same name as listed in securitySchemes
