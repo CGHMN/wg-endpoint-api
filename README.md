@@ -30,7 +30,8 @@ The body is a JSON object with the following structure:
 			"endpoint_address": "peer01.example.org",
 			"endpoint_port": 51820,
 			"persistent_keepalive": 15,
-			"name": "Example Peer"
+			"name": "Example Peer",
+			"allowed_ips": ["172.15.0.2/32", "192.168.2.0/24"]
 		}
 	]
 }
