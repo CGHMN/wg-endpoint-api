@@ -129,6 +129,8 @@ class WireguardConfigurationParser
 				$this->targetInterface,
 				($this->interfaceData['privatekey'] ?? null) ?: throw new \Exception("Missing 'PrivateKey' property in [Interface] section"),
 				filter_var($this->interfaceData['listenport'] ?? null, FILTER_VALIDATE_INT, ['options' => ['default' => null, 'min_range' => 1, 'max_range' => 65535]]),
+				$this->interfaceData['address'] ?? null,
+				filter_var($this->interfaceData['mtu'] ?? null, FILTER_VALIDATE_INT, ['options' => ['default' => null, 'min_range' => 1, 'max_range' => 65535]]),
 				filter_var($this->interfaceData['fwmark'] ?? null, FILTER_VALIDATE_INT, ['options' => ['default' => null, 'min_range' => 1, 'max_range' => 4294967295]])
 			);
 			$this->interfaceData = [];

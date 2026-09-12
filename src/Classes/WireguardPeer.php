@@ -16,7 +16,7 @@ class WireguardPeer implements \Stringable
 	 */
 	public private(set) string $publicKey {
 		set(string $value) {
-			if (! WireguardHelper::keyIsValid($value)) {
+			if (!WireguardHelper::keyIsValid($value)) {
 				throw new \InvalidArgumentException("The given public key is not a valid Wireguard public key");
 			}
 
@@ -39,7 +39,7 @@ class WireguardPeer implements \Stringable
 			return $this->presharedKey;
 		}
 		set(string|null $value) {
-			if ($value !== null && ! WireguardHelper::keyIsValid($value)) {
+			if ($value !== null && !WireguardHelper::keyIsValid($value)) {
 				throw new \InvalidArgumentException("The given preshared key is not a valid Wireguard preshared key");
 			}
 
@@ -56,7 +56,7 @@ class WireguardPeer implements \Stringable
 			if ($value === null) {
 				$this->endpointAddress = null;
 			} else if (
-			filter_var($value, FILTER_VALIDATE_DOMAIN) === false ||
+			filter_var($value, FILTER_VALIDATE_DOMAIN) === false &&
 			filter_var($value, FILTER_VALIDATE_IP) === false
 			) {
 				throw new \InvalidArgumentException('Endpoint address needs to be a valid domain name or IP address');
@@ -74,7 +74,7 @@ class WireguardPeer implements \Stringable
 		set(int|null $value) {
 			if ($value === null) {
 				$this->endpointPort = null;
-			} else if (! \is_int($value)) {
+			} else if (!\is_int($value)) {
 				throw new \InvalidArgumentException('Trying to assign non-number to endpoint port property');
 			} else if (1 > $value || $value > 65535) {
 				throw new \InvalidArgumentException('Trying to assign endpoint port port outside of valid range 1-65535');
@@ -92,7 +92,7 @@ class WireguardPeer implements \Stringable
 		set(int|null $value) {
 			if ($value === null || $value === 0) {
 				$this->persistentKeepalive = null;
-			} else if (! \is_int($value)) {
+			} else if (!\is_int($value)) {
 				throw new \InvalidArgumentException('Trying to assign non-number to persistent keepalive property');
 			} else if (1 > $value || $value > 65535) {
 				throw new \InvalidArgumentException('Trying to assign persistent keepalive interval outside of valid range 1-65535');
@@ -225,7 +225,7 @@ class WireguardPeer implements \Stringable
 		$config_string = <<<WG
 		[Peer]
 		PublicKey = {$this->publicKey}
-		WG."\n";
+		WG . "\n";
 
 		if ($this->presharedKey) {
 			$config_string .= "PresharedKey = {$this->presharedKey}\n";
