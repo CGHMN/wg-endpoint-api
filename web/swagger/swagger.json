@@ -1,0 +1,413 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "CGHMN Wireguard API for remote nodes",
+        "description": "This API allows Wireguard tunnels to be configured on remote nodes through a simple HTTP call.\nIt is stateless and syncs existing tunnels with the given configuration without interrupting existing connections.\n",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "\/api\/v1\/interfaces\/{interface}\/sync": {
+            "post": {
+                "summary": "Synchronize Wireguard configuration with local Wireguard interface",
+                "description": "Takes a WireguardInterface JSON object and syncs it against the given local Wireguard interface or creates it if it doesn't already exist",
+                "parameters": [
+                    {
+                        "name": "interface",
+                        "in": "path",
+                        "description": "Linux interface name of the tunnel interface, starting with wg-*",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "wg-server"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Wireguard interface configuration data",
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "title": "Wireguard Interface",
+                                "required": [
+                                    "private_key",
+                                    "address"
+                                ],
+                                "type": "object",
+                                "properties": {
+                                    "private_key": {
+                                        "title": "Private Key",
+                                        "type": "string",
+                                        "description": "Private key of the tunnel interface itself",
+                                        "example": "ON926JlcsOj4LZ7leO0oDtbLzy+gQYdpk6aN+WLHO3U="
+                                    },
+                                    "address": {
+                                        "title": "Interface IPv4 address in CIDR notation",
+                                        "type": "string",
+                                        "description": "Local IPv4 address of the tunnel interface in CIDR notation",
+                                        "example": "172.16.0.1\/24"
+                                    },
+                                    "listen_port": {
+                                        "title": "Listen Port",
+                                        "maximum": 65535,
+                                        "minimum": 1,
+                                        "type": "integer",
+                                        "description": "UDP port on which the tunnel interfaces listens for incoming packets on. Set to null to autoselect a random port",
+                                        "nullable": true,
+                                        "example": 51820
+                                    },
+                                    "mtu": {
+                                        "title": "Interface MTU",
+                                        "maximum": 65535,
+                                        "minimum": 68,
+                                        "type": "integer",
+                                        "description": "Maximum transmission unit size of the tunnel interface",
+                                        "nullable": true,
+                                        "example": 1300
+                                    },
+                                    "fwmark": {
+                                        "title": "Packet Firewall Mark",
+                                        "maximum": 4294967295,
+                                        "minimum": 1,
+                                        "type": "integer",
+                                        "description": "Firewall mark applied to packets flowing out of the tunnel interface",
+                                        "nullable": true,
+                                        "example": 10000
+                                    },
+                                    "peers": {
+                                        "title": "Wireguard Peers",
+                                        "uniqueItems": true,
+                                        "type": "array",
+                                        "items": {
+                                            "title": "Wireguard Peer",
+                                            "required": [
+                                                "public_key"
+                                            ],
+                                            "type": "object",
+                                            "properties": {
+                                                "public_key": {
+                                                    "title": "Public Key",
+                                                    "type": "string",
+                                                    "description": "Public key of the peer",
+                                                    "example": "0FV+EXUgDu3s4vktF08WOJk0Qp3IxIKp5BM4\/zTkUSM="
+                                                },
+                                                "preshared_key": {
+                                                    "title": "Preshared Key",
+                                                    "type": "string",
+                                                    "description": "Preshared key between the peer and local tunnel interface",
+                                                    "nullable": true,
+                                                    "example": "oMbWTsgHbSYP3DktWoQxNapfpek49DgEEQnZBjZskp0="
+                                                },
+                                                "endpoint_address": {
+                                                    "title": "Endpoint Address",
+                                                    "type": "string",
+                                                    "description": "IP address or hostname of the peer endpoint to connect to",
+                                                    "nullable": true,
+                                                    "example": "peer1.example.org"
+                                                },
+                                                "endpoint_port": {
+                                                    "title": "Endpoint Port",
+                                                    "maximum": 65535,
+                                                    "minimum": 1,
+                                                    "type": "integer",
+                                                    "description": "Port of the peer endpoint to connect to",
+                                                    "nullable": true,
+                                                    "example": 51820
+                                                },
+                                                "persistent_keepalive": {
+                                                    "title": "Persistent Keepalive Interval",
+                                                    "minimum": 1,
+                                                    "type": "integer",
+                                                    "description": "Interval after which to send empty packets towards the peer to keep NAT connections open",
+                                                    "nullable": true,
+                                                    "example": 15
+                                                },
+                                                "name": {
+                                                    "title": "Optional peer name",
+                                                    "type": "string",
+                                                    "description": "Optional property to assign a peer a name",
+                                                    "nullable": true,
+                                                    "example": "First Peer"
+                                                },
+                                                "allowed_ips": {
+                                                    "title": "Allowed IPs",
+                                                    "uniqueItems": true,
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": "IP addresses routed towards the peer",
+                                                    "example": [
+                                                        "172.16.0.2\/32",
+                                                        "10.0.2.0\/24"
+                                                    ]
+                                                }
+                                            },
+                                            "description": "Represents a Wireguard Peer connecting to a Wireguard Interface"
+                                        },
+                                        "description": "Configuration entries for Wireguard peers connecting to this interface"
+                                    }
+                                },
+                                "description": "Represents a Wireguard tunnel interface"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "enum": [
+                                        true
+                                    ],
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data given",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "title": "Error Message",
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid authorization (X-API-Key header)",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "title": "Error Message",
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "WireguardInterface": {
+                "title": "Wireguard Interface",
+                "required": [
+                    "private_key",
+                    "address"
+                ],
+                "type": "object",
+                "properties": {
+                    "private_key": {
+                        "title": "Private Key",
+                        "type": "string",
+                        "description": "Private key of the tunnel interface itself",
+                        "example": "ON926JlcsOj4LZ7leO0oDtbLzy+gQYdpk6aN+WLHO3U="
+                    },
+                    "address": {
+                        "title": "Interface IPv4 address in CIDR notation",
+                        "type": "string",
+                        "description": "Local IPv4 address of the tunnel interface in CIDR notation",
+                        "example": "172.16.0.1\/24"
+                    },
+                    "listen_port": {
+                        "title": "Listen Port",
+                        "maximum": 65535,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "UDP port on which the tunnel interfaces listens for incoming packets on. Set to null to autoselect a random port",
+                        "nullable": true,
+                        "example": 51820
+                    },
+                    "mtu": {
+                        "title": "Interface MTU",
+                        "maximum": 65535,
+                        "minimum": 68,
+                        "type": "integer",
+                        "description": "Maximum transmission unit size of the tunnel interface",
+                        "nullable": true,
+                        "example": 1300
+                    },
+                    "fwmark": {
+                        "title": "Packet Firewall Mark",
+                        "maximum": 4294967295,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Firewall mark applied to packets flowing out of the tunnel interface",
+                        "nullable": true,
+                        "example": 10000
+                    },
+                    "peers": {
+                        "title": "Wireguard Peers",
+                        "uniqueItems": true,
+                        "type": "array",
+                        "items": {
+                            "title": "Wireguard Peer",
+                            "required": [
+                                "public_key"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "public_key": {
+                                    "title": "Public Key",
+                                    "type": "string",
+                                    "description": "Public key of the peer",
+                                    "example": "0FV+EXUgDu3s4vktF08WOJk0Qp3IxIKp5BM4\/zTkUSM="
+                                },
+                                "preshared_key": {
+                                    "title": "Preshared Key",
+                                    "type": "string",
+                                    "description": "Preshared key between the peer and local tunnel interface",
+                                    "nullable": true,
+                                    "example": "oMbWTsgHbSYP3DktWoQxNapfpek49DgEEQnZBjZskp0="
+                                },
+                                "endpoint_address": {
+                                    "title": "Endpoint Address",
+                                    "type": "string",
+                                    "description": "IP address or hostname of the peer endpoint to connect to",
+                                    "nullable": true,
+                                    "example": "peer1.example.org"
+                                },
+                                "endpoint_port": {
+                                    "title": "Endpoint Port",
+                                    "maximum": 65535,
+                                    "minimum": 1,
+                                    "type": "integer",
+                                    "description": "Port of the peer endpoint to connect to",
+                                    "nullable": true,
+                                    "example": 51820
+                                },
+                                "persistent_keepalive": {
+                                    "title": "Persistent Keepalive Interval",
+                                    "minimum": 1,
+                                    "type": "integer",
+                                    "description": "Interval after which to send empty packets towards the peer to keep NAT connections open",
+                                    "nullable": true,
+                                    "example": 15
+                                },
+                                "name": {
+                                    "title": "Optional peer name",
+                                    "type": "string",
+                                    "description": "Optional property to assign a peer a name",
+                                    "nullable": true,
+                                    "example": "First Peer"
+                                },
+                                "allowed_ips": {
+                                    "title": "Allowed IPs",
+                                    "uniqueItems": true,
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "description": "IP addresses routed towards the peer",
+                                    "example": [
+                                        "172.16.0.2\/32",
+                                        "10.0.2.0\/24"
+                                    ]
+                                }
+                            },
+                            "description": "Represents a Wireguard Peer connecting to a Wireguard Interface"
+                        },
+                        "description": "Configuration entries for Wireguard peers connecting to this interface"
+                    }
+                },
+                "description": "Represents a Wireguard tunnel interface"
+            },
+            "WireguardPeer": {
+                "title": "Wireguard Peer",
+                "required": [
+                    "public_key"
+                ],
+                "type": "object",
+                "properties": {
+                    "public_key": {
+                        "title": "Public Key",
+                        "type": "string",
+                        "description": "Public key of the peer",
+                        "example": "0FV+EXUgDu3s4vktF08WOJk0Qp3IxIKp5BM4\/zTkUSM="
+                    },
+                    "preshared_key": {
+                        "title": "Preshared Key",
+                        "type": "string",
+                        "description": "Preshared key between the peer and local tunnel interface",
+                        "nullable": true,
+                        "example": "oMbWTsgHbSYP3DktWoQxNapfpek49DgEEQnZBjZskp0="
+                    },
+                    "endpoint_address": {
+                        "title": "Endpoint Address",
+                        "type": "string",
+                        "description": "IP address or hostname of the peer endpoint to connect to",
+                        "nullable": true,
+                        "example": "peer1.example.org"
+                    },
+                    "endpoint_port": {
+                        "title": "Endpoint Port",
+                        "maximum": 65535,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Port of the peer endpoint to connect to",
+                        "nullable": true,
+                        "example": 51820
+                    },
+                    "persistent_keepalive": {
+                        "title": "Persistent Keepalive Interval",
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Interval after which to send empty packets towards the peer to keep NAT connections open",
+                        "nullable": true,
+                        "example": 15
+                    },
+                    "name": {
+                        "title": "Optional peer name",
+                        "type": "string",
+                        "description": "Optional property to assign a peer a name",
+                        "nullable": true,
+                        "example": "First Peer"
+                    },
+                    "allowed_ips": {
+                        "title": "Allowed IPs",
+                        "uniqueItems": true,
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "IP addresses routed towards the peer",
+                        "example": [
+                            "172.16.0.2\/32",
+                            "10.0.2.0\/24"
+                        ]
+                    }
+                },
+                "description": "Represents a Wireguard Peer connecting to a Wireguard Interface"
+            }
+        },
+        "securitySchemes": {
+            "apiAuthKey": {
+                "type": "apiKey",
+                "name": "X-API-Key",
+                "in": "header"
+            }
+        }
+    },
+    "security": [
+        {
+            "apiAuthKey": []
+        }
+    ]
+}

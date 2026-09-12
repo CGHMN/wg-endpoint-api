@@ -9,6 +9,12 @@ post:
       schema:
         type: string
         example: wg-server
+  requestBody:
+    description: Wireguard interface configuration data
+    content:
+      application/json:
+        schema:
+          $ref: ../../../../components/WireguardInterface.yaml
   responses:
     200:
       description: OK

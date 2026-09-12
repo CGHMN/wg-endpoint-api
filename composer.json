@@ -19,7 +19,15 @@
 		"miladrahimi/phprouter": "^5.1",
 		"deemru/curve25519": "^1.0",
 		"luzrain/ipcalc": "^2.0",
-		"vlucas/phpdotenv": "^5.7"
+		"vlucas/phpdotenv": "^5.7",
+		"cebe/php-openapi": "^1.8"
+	},
+	"scripts": {
+		"apidocs": "php-openapi convert docs/api/index.yaml web/swagger/swagger.json",
+		"server": [
+			"Composer\\Config::disableProcessTimeout",
+			"php -t web -S 0.0.0.0:8001 web/index.php"
+		]
 	},
 	"minimum-stability": "dev",
 	"prefer-stable": true
