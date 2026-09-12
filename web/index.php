@@ -43,6 +43,11 @@ try {
 		throw $exception;
 	}
 
+	// Let the built-in PHP development server serve static content not covered by the PHP router
+	if ($exceptionCode == 404 && php_sapi_name() == 'cli-server') {
+		return false;
+	}
+
 	// Try to render the exception with a view named after the exceptions HTTP code,
 	// otherwise just return a simple HTML error message
 	try {
@@ -51,5 +56,7 @@ try {
 		$router->getPublisher()->publish(new HtmlResponse($exceptionString, $exceptionCode));
 	}
 
-	throw $exception;
+	if ($exceptionCode >= 500) {
+		throw $exception;
+	}
 }
