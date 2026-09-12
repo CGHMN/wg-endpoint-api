@@ -139,7 +139,7 @@ class WireguardInterface implements \Stringable
 	}
 
 	/**
-	 * Parse JSON string into Wireguard interface
+	 * Parse JSON string into a Wireguard interface object
 	 * @param string $json
 	 * @return WireguardInterface
 	 */
@@ -182,6 +182,25 @@ class WireguardInterface implements \Stringable
 		}
 
 		return $wgInterface;
+	}
+
+	/**
+	 * Parse a Wireguard/wg-quick .conf file into a Wireguard interface object
+	 * @param string $filename Name of the file to parse
+	 * @param ?string $interfaceName Optional name of the target Wireguard interface, otherwise parses from filename
+	 * @return WireguardInterface
+	 */
+	public static function fromConfFile(string $filename, ?string $interfaceName = null): WireguardInterface
+	{
+		if (!$interfaceName) {
+			if (preg_match('/^wg-([A-Za-z0-9_-]+)/', strtolower(basename($filename)), $matches)) {
+				$interfaceName = $matches[1];
+			} else {
+				throw new \Exception("Could not guess Wireguard interface name from file " . basename($filename));
+			}
+		}
+
+		return (new WireguardConfigurationParser(file_get_contents($filename), $interfaceName))->parse();
 	}
 
 	/**
@@ -315,6 +334,12 @@ class WireguardInterface implements \Stringable
 			throw new \Exception("The Wireguard interface configuration about to be applied to the system does not have an IP address configured");
 		}
 
+		// Do not run any configuration commands if dry-run is enabled
+		if ($_ENV['DRY_RUN'] === 'true') {
+			error_log("Debug: Dry-run enabled, not configuring interface {$this->interface}");
+			return;
+		}
+
 		// Prepare Wireguard tunnel interface
 		ThrowingExec::exec(
 			"sudo",
@@ -335,6 +360,53 @@ class WireguardInterface implements \Stringable
 	}
 
 	/**
+	 * Try to get data about a specific Wireguard interface
+	 * @param string $interfaceName Linux device name of the Wireguard interface
+	 * @return WireguardInterface|null Returns a Wireguard interface object of the specified interface
+	 *   or null if no matching interface was found
+	 */
+	public static function getWireguardInterface(string $interfaceName): self|null
+	{
+		// Only allow interface names which start with `wg-`
+		if (!preg_match('/^wg(\d+|\-[a-z0-9_-]+)/i', $interfaceName)) {
+			throw new \Exception("Invalid interface name {$interfaceName} specified");
+		}
+
+		// Ensure interface exists
+		if (!is_dir("/sys/class/net/{$interfaceName}")) {
+			return null;
+		}
+
+		// Try and parse IP address and MTU from interface as they are not included in the wg showconf output
+		$ip_address = null;
+		$mtu = null;
+		if ($ip_output = shell_exec("{$_ENV['IP_BINARY']} --json address show " . escapeshellarg($interfaceName))) {
+			$interface_ip_detail = json_decode($ip_output)[0];
+			$mtu = $interface_ip_detail->mtu ?? null;
+
+			$addr_info = array_filter(
+				$interface_ip_detail->addr_info ?? [],
+				fn($v) => $v->family == 'inet'
+			);
+
+			if (\count($addr_info) === 1 && $addr_info[0]->local ?? null && $addr_info[0]->prefixlen ?? null) {
+				$ip_address = "{$addr_info[0]->local}/{$addr_info[0]->prefixlen}";
+			}
+		}
+
+		$parser = new WireguardConfigurationParser(
+			ThrowingExec::exec("sudo", [$_ENV['WG_BINARY'], 'showconf', $interfaceName]),
+			$interfaceName
+		);
+
+		$interface = $parser->parse();
+		$interface->address = $ip_address;
+		$interface->mtu = $mtu;
+
+		return $interface;
+	}
+
+	/**
 	 * Enumerate all active Wireguard interfaces on the system and create Wireguard Interface objects for each
 	 * @return WireguardInterface[]
 	 */
@@ -345,37 +417,13 @@ class WireguardInterface implements \Stringable
 		foreach (glob('/sys/class/net/wg*') as $device_dir) {
 			$device_name = basename($device_dir);
 
-			if (!preg_match('/^wg(\d+|\-[a-z0-9_-]+)/i', $device_name)) {
-				continue;
-			}
-
-			// Try and parse IP address and MTU from interface as they are not included in the wg showconf output
-			$ip_address = null;
-			$mtu = null;
-			if ($ip_output = shell_exec("{$_ENV['IP_BINARY']} --json address show " . escapeshellarg($device_name))) {
-				$interface_ip_detail = json_decode($ip_output)[0];
-				$mtu = $interface_ip_detail->mtu ?? null;
-
-				$addr_info = array_filter(
-					$interface_ip_detail->addr_info ?? [],
-					fn($v) => $v->family == 'inet'
-				);
-
-				if (\count($addr_info) === 1 && $addr_info[0]->local ?? null && $addr_info[0]->prefixlen ?? null) {
-					$ip_address = "{$addr_info[0]->local}/{$addr_info[0]->prefixlen}";
+			// Try to get data about the Wireguard interface and skip over any errors
+			try {
+				if ($interface = self::getWireguardInterface($device_name)) {
+					$interfaces[] = $interface;
 				}
+			} catch (\Exception $_) {
 			}
-
-			$parser = new WireguardConfigurationParser(
-				ThrowingExec::exec("sudo", [$_ENV['WG_BINARY'], 'showconf', $device_name]),
-				$device_name
-			);
-
-			$interface = $parser->parse();
-			$interface->address = $ip_address;
-			$interface->mtu = $mtu;
-
-			$interfaces[] = $interface;
 		}
 
 		return $interfaces;

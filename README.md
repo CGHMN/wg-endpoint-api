@@ -97,3 +97,17 @@ www-data ALL=NOPASSWD: /opt/wg-endpoint-api/scripts/prepare-tunnel-interface.sh 
 
 If the `wg` binary can be found at a different path than the default `/usr/bin/wg`, adjust the path above in the sudoers file and set the
 `WG_BINARY` environment variable in `.env` to the absolute path of your `wg` binary.
+
+# Interfacing with the existing Wireguard Controller as control server
+
+The `bin/cron.php` file can be used to pull configuration changes from the central Wireguard Controller automatically
+through cron or systemd timers. It can also be used to bring up the interface at boot to the most up-to-date configuration
+as long as the control server is reachable. If not, a cached version of the configuration is attempted to be used, by default
+located at `cache/<interface-name>.conf`. To disable writing cache configuraton files, simply set the environment variable
+`CONFIGURATION_CACHE_DIR` to an empty string in `.env`.
+
+To enable this behavior, first configure the `CONTROL_SERVER_URI` and `CONTROL_SERVER_AUTHKEY` environment variables in `.env`.  
+`CONTROL_SERVER_URI` takes the form of `http://<wg-controller-host>/api/v1`, where `<wg-controller-host>` is replaced by the host
+and optionally port of the Wireguard Controller. An example for the current infrastructure as of 2026-09-12 would be
+`CONTROL_SERVER_URI=http://100.64.12.2/api/v1`. The `CONTROL_SERVER_AUTHKEY` holds the same API auth key as configured on the
+Wireguard Controller in its environment (`.env` file) as the environment variable `API_KEY`.

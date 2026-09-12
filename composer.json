@@ -20,6 +20,8 @@
 		"deemru/curve25519": "^1.0",
 		"luzrain/ipcalc": "^2.0",
 		"vlucas/phpdotenv": "^5.7",
+		"guzzlehttp/psr7": "^3.1",
+		"guzzlehttp/guzzle": "^8.2",
 		"cebe/php-openapi": "^1.8"
 	},
 	"scripts": {
