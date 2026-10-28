@@ -37,36 +37,54 @@ class ThrowingExec
 			throw new \Exception("Failed to open process as a resource");
 		}
 
+		// Destructure pipe array into individual variables
+		[$pipe_stdin, $pipe_stdout, $pipe_stderr] = $pipes;
+
+		// Write data to stdin and close pipe
 		if ($stdin !== null) {
-			fwrite($pipes[0], $stdin);
-			fclose($pipes[0]);
+			fwrite($pipe_stdin, $stdin);
+		}
+		fclose($pipe_stdin);
+
+		// Disable pipe blocking for the read-loop below
+		stream_set_blocking($pipe_stdout, false);
+		stream_set_blocking($pipe_stderr, false);
+
+		// Collect stdout and stderr text in variables as their read during the process' lifecycle
+		[$stdout, $stderr] = ['', ''];
+
+		// Read pipes to keep them from blocking the underlying process until the process closes
+		[$stdout_eof, $stderr_eof] = [false, false];
+		while (!$stdout_eof || !$stderr_eof) {
+			[$read, $write, $except] = [
+				[$pipe_stdout, $pipe_stderr],
+				null,
+				null
+			];
+
+			// Wait for data to become available on stdout or stderr for at most one second
+			stream_select($read, $write, $except, 1);
+
+			// Read EOF status of both pipes
+			$stdout_eof = feof($pipe_stdout);
+			$stderr_eof = feof($pipe_stderr);
+
+			// Read data from both pipes if available
+			if (!$stdout_eof) {
+				$stdout .= fgets($pipe_stdout);
+			}
+
+			if (!$stderr_eof) {
+				$stderr .= fgets($pipe_stderr);
+			}
 		}
 
-		// Wait until the process closes
-		/**
-		 * @var array{
-		 *   command: string,
-		 *   pid: int,
-		 *   running: bool,
-		 *   signaled: bool,
-		 *   stopped: bool,
-		 *   exitcode: int,
-		 *   cached: bool,
-		 *   termsig: int,
-		 *   stopsig: int
-		 * } $process_status
-		 */
-		while (($process_status = proc_get_status($process))['running'] == true) {
-			usleep(1000 * 50);
-		}
+		// Close all remaining pipes
+		fclose($pipe_stdout);
+		fclose($pipe_stderr);
 
-		// Get contents of standard output and standard error streams and close all pipes
-		$stdout = stream_get_contents($pipes[1]);
-		$stderr = stream_get_contents($pipes[2]);
-		fclose($pipes[1]);
-		fclose($pipes[2]);
-
-		// Close process
+		// Get final process status and close process
+		$process_status = proc_get_status($process);
 		proc_close($process);
 
 		// Parse exit code
