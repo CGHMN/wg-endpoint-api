@@ -97,7 +97,7 @@ class WireguardInterface implements \Stringable
 	 */
 	public IP|null $address = null {
 		set(string|IP|null $value) {
-			if (!$value === null || !$value) {
+			if ($value === null || !$value) {
 				$this->address = null;
 				return;
 			}
