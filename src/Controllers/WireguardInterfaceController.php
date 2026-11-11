@@ -11,12 +11,6 @@ class WireguardInterfaceController
 	public function syncConfig(ServerRequest $request, string $interface): JsonResponse
 	{
 		$interface = WireguardInterface::fromJson($interface, $request->getBody()->getContents());
-
-		// Apply overwritten private key if set in .env file
-		if ($privateKey = $_ENV['OVERWRITE_SERVER_PRIVATE_KEY'] ?? null) {
-			$interface->setPrivateKey($privateKey);
-		}
-
 		$interface->apply();
 
 		// Write cached configuration file

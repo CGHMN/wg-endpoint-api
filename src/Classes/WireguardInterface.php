@@ -181,6 +181,11 @@ class WireguardInterface implements \Stringable
 			$wgInterface->addPeer($peer);
 		}
 
+		// Apply overwritten private key if set in .env file
+		if ($privateKey = $_ENV['OVERWRITE_SERVER_PRIVATE_KEY'] ?? null) {
+			$wgInterface->setPrivateKey($privateKey);
+		}
+
 		return $wgInterface;
 	}
 
@@ -200,7 +205,14 @@ class WireguardInterface implements \Stringable
 			}
 		}
 
-		return (new WireguardConfigurationParser(file_get_contents($filename), $interfaceName))->parse();
+		$interface = (new WireguardConfigurationParser(file_get_contents($filename), $interfaceName))->parse();
+
+		// Apply overwritten private key if set in .env file
+		if ($privateKey = $_ENV['OVERWRITE_SERVER_PRIVATE_KEY'] ?? null) {
+			$interface->setPrivateKey($privateKey);
+		}
+
+		return $interface;
 	}
 
 	/**
