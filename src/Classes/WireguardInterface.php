@@ -213,6 +213,16 @@ class WireguardInterface implements \Stringable
 	}
 
 	/**
+	 * Changes the private key of this Wireguard interface
+	 * @param string $privateKey Base64 encoded private key
+	 * @return void
+	 */
+	public function setPrivateKey(string $privateKey): void
+	{
+		$this->privateKey = $privateKey;
+	}
+
+	/**
 	 * Get the public key of this interface
 	 * @return string Public key of the interface
 	 */
@@ -334,9 +344,12 @@ class WireguardInterface implements \Stringable
 			throw new \Exception("The Wireguard interface configuration about to be applied to the system does not have an IP address configured");
 		}
 
+		$wireguardConfiguration = $this->getConfiguration(false);
+
 		// Do not run any configuration commands if dry-run is enabled
 		if ($_ENV['DRY_RUN'] === 'true') {
-			error_log("Debug: Dry-run enabled, not configuring interface {$this->interface}");
+			error_log("Debug: Dry-run enabled, interface {$this->interface} configuration:");
+			error_log("\n{$wireguardConfiguration}");
 			return;
 		}
 
@@ -355,7 +368,7 @@ class WireguardInterface implements \Stringable
 		ThrowingExec::exec(
 			"sudo",
 			[$_ENV['WG_BINARY'], 'syncconf', $this->interface, '/proc/self/fd/0'],
-			stdin: $this->getConfiguration(false)
+			stdin: $wireguardConfiguration
 		);
 	}
 
